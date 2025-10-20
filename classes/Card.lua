@@ -19,7 +19,7 @@ function Card.new(id, content, cardType, x, y, width, height)
 
     instance.id = id
     instance.content = content
-    instance.cardType = cardType -- "text", "image", "ascii"
+    instance.cardType = cardType -- "words", "ascii", "numbers"
     instance.x = x
     instance.y = y
     instance.width = width
@@ -43,6 +43,10 @@ function Card.new(id, content, cardType, x, y, width, height)
     }
 
     return instance
+end
+
+function Card:setFonts(fonts)
+    self.fonts = fonts
 end
 
 function Card:update(dt)
@@ -173,22 +177,32 @@ end
 function Card:drawContent()
     love.graphics.setColor(self.colors.text)
 
-    if self.cardType == "text" then
-        local font = love.graphics.newFont(math_min(self.width, self.height) * 0.3)
-        love.graphics.setFont(font)
-        love.graphics.printf(self.content, -self.width / 2, -self.height / 3, self.width, "center")
-    elseif self.cardType == "ascii" then
-        local scale = math_min(self.width, self.height) * 0.002
-        love.graphics.print(self.content, -self.width / 3, -self.height / 3, 0, scale)
-    elseif self.cardType == "image" then
-        -- For image cards, you would load and draw an image here
-        -- Example: love.graphics.draw(self.content, -self.width/2, -self.height/2, 0,
-        --           self.width/self.content:getWidth(), self.height/self.content:getHeight())
+    if self.cardType == "words" or self.cardType == "numbers" then
+        -- Use card font for words and numbers
+        love.graphics.setFont(self.fonts.cardLarge)
+        local text = tostring(self.content)
+        local textWidth = self.fonts.cardLarge:getWidth(text)
+        local textHeight = self.fonts.cardLarge:getHeight()
 
-        -- Fallback to text if image not loaded
-        local font = love.graphics.newFont(math_min(self.width, self.height) * 0.2)
-        love.graphics.setFont(font)
-        love.graphics.printf("IMAGE", -self.width / 2, -self.height / 3, self.width, "center")
+        -- Center the text
+        love.graphics.print(text, -textWidth / 2, -textHeight / 2)
+
+    elseif self.cardType == "ascii" then
+        -- Use monospace font for ASCII art and scale appropriately
+        love.graphics.setFont(self.fonts.ascii)
+        local scale = math_min(self.width, self.height) * 0.008 -- Adjusted scale
+        local lines = {}
+        for line in self.content:gmatch("[^\r\n]+") do
+            table_insert(lines, line)
+        end
+
+        local totalHeight = #lines * self.fonts.ascii:getHeight() * scale
+        local startY = -totalHeight / 2
+
+        for i, line in ipairs(lines) do
+            local lineWidth = self.fonts.ascii:getWidth(line) * scale
+            love.graphics.print(line, -lineWidth / 2, startY + (i-1) * self.fonts.ascii:getHeight() * scale, 0, scale)
+        end
     end
 end
 

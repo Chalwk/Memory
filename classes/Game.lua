@@ -82,6 +82,7 @@ function Game:startNewGame(difficulty, deckType)
     self.cards = {}
     self.flippedCards = {}
     self.matchedPairs = 0
+    self.totalPairs = 0
     self.moves = 0
     self.score = 0
     self.timeElapsed = 0
@@ -95,7 +96,7 @@ function Game:startNewGame(difficulty, deckType)
     self.bonusType = nil
     self.animations = {}
     self.globalParticles = {}
-    self.tokens = 5  -- Start with some tokens
+    self.tokens = 5 -- Start with some tokens
 
     -- Reset power-ups
     for _, powerUp in pairs(self.powerUps) do
@@ -110,7 +111,11 @@ function Game:startNewGame(difficulty, deckType)
 
     -- Create card objects
     for i, data in ipairs(cardData) do
-        table_insert(self.cards, Card.new(data.id, data.content, data.cardType, 0, 0, 80, 120))
+        local card = Card.new(data.id, data.content, data.cardType, 0, 0, 80, 120)
+        if self.fonts then
+            card:setFonts(self.fonts)
+        end
+        table_insert(self.cards, card)
     end
 
     self:arrangeCards()
@@ -252,7 +257,7 @@ function Game:drawUI()
 
     -- Score and moves
     love.graphics.setColor(1, 1, 1)
-    love.graphics.setFont(love.graphics.newFont(20))
+    love.graphics.setFont(self.fonts.medium)
     love.graphics.print("Score: " .. self.score, 20, uiY)
     love.graphics.print("Moves: " .. self.moves, 20, uiY + 30)
     love.graphics.print("Pairs: " .. self.matchedPairs .. "/" .. self.totalPairs, 20, uiY + 60)
@@ -261,7 +266,7 @@ function Game:drawUI()
     local minutes = math_floor(self.timeElapsed / 60)
     local seconds = math_floor(self.timeElapsed % 60)
     love.graphics.printf(string.format("Time: %02d:%02d", minutes, seconds),
-                        0, uiY, self.screenWidth - 20, "right")
+        0, uiY, self.screenWidth - 20, "right")
 
     -- Combo
     if self.combo > 1 then
@@ -288,7 +293,7 @@ function Game:drawUI()
     if self.bonusActive then
         love.graphics.setColor(0.2, 0.8, 1, 0.8)
         love.graphics.printf("BONUS: " .. self.bonusType:upper(),
-                            0, uiY + 120, self.screenWidth, "center")
+            0, uiY + 120, self.screenWidth, "center")
     end
 end
 
@@ -364,7 +369,8 @@ function Game:drawGameOver()
     love.graphics.setColor(1, 1, 1)
     love.graphics.setFont(love.graphics.newFont(24))
     love.graphics.printf("Final Score: " .. self.score, 0, self.screenHeight / 2 - 30, self.screenWidth, "center")
-    love.graphics.printf("Time: " .. math_floor(self.timeElapsed) .. "s", 0, self.screenHeight / 2, self.screenWidth, "center")
+    love.graphics.printf("Time: " .. math_floor(self.timeElapsed) .. "s", 0, self.screenHeight / 2, self.screenWidth,
+        "center")
     love.graphics.printf("Moves: " .. self.moves, 0, self.screenHeight / 2 + 30, self.screenWidth, "center")
 
     love.graphics.setFont(love.graphics.newFont(20))
@@ -448,7 +454,7 @@ function Game:handleMismatch()
 
     table_insert(self.animations, {
         type = "flip_back",
-        cards = {self.flippedCards[1].id, self.flippedCards[2].id},
+        cards = { self.flippedCards[1].id, self.flippedCards[2].id },
         progress = 0,
         duration = 1
     })
@@ -475,7 +481,7 @@ function Game:createScoreParticles(score)
             dy = (math_random() - 0.5) * 100 - 50,
             life = math_random(1.0, 2.0),
             size = math_random(3, 6),
-            color = {0.2, 0.8, 0.3}
+            color = { 0.2, 0.8, 0.3 }
         })
     end
 end
@@ -489,7 +495,7 @@ function Game:createBonusParticles()
             dy = (math_random() - 0.5) * 150,
             life = math_random(1.5, 2.5),
             size = math_random(4, 8),
-            color = {0.2, 0.6, 1.0}
+            color = { 0.2, 0.6, 1.0 }
         })
     end
 end
@@ -511,7 +517,7 @@ function Game:checkPowerUpClicks(x, y)
         local currentY = buttonY + (i - 1) * (buttonHeight + spacing)
 
         if x >= buttonX and x <= buttonX + buttonWidth and
-           y >= currentY and y <= currentY + buttonHeight then
+            y >= currentY and y <= currentY + buttonHeight then
             self:usePowerUp(powerUp)
             return true
         end
@@ -594,6 +600,10 @@ end
 
 function Game:isGameOver()
     return self.gameOver
+end
+
+function Game:setFonts(fonts)
+    self.fonts = fonts
 end
 
 return Game

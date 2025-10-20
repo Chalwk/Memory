@@ -9,6 +9,7 @@ local BackgroundManager = require("classes/BackgroundManager")
 local game, menu, backgroundManager
 local screenWidth, screenHeight
 local gameState = "menu"
+local fonts = {}
 
 local function updateScreenSize()
     screenWidth = love.graphics.getWidth()
@@ -20,9 +21,24 @@ function love.load()
     love.graphics.setDefaultFilter("nearest", "nearest")
     love.graphics.setLineStyle("smooth")
 
+    -- Load fonts
+    fonts.small = love.graphics.newFont(16)
+    fonts.medium = love.graphics.newFont(22)
+    fonts.large = love.graphics.newFont(52)
+    fonts.section = love.graphics.newFont(18)
+    fonts.card = love.graphics.newFont(20)
+    fonts.cardLarge = love.graphics.newFont(28)
+    fonts.ascii = love.graphics.newFont(12) -- Monospace font for ASCII art
+
+    -- Set default font
+    love.graphics.setFont(fonts.medium)
+
     game = Game.new()
     menu = Menu.new()
     backgroundManager = BackgroundManager.new()
+
+    menu:setFonts(fonts)
+    game:setFonts(fonts)
 
     updateScreenSize()
     menu:setScreenSize(screenWidth, screenHeight)

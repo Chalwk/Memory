@@ -44,15 +44,17 @@ function Menu.new()
     }
     instance.showHelp = false
 
-    instance.smallFont = love.graphics.newFont(16)
-    instance.mediumFont = love.graphics.newFont(22)
-    instance.largeFont = love.graphics.newFont(52)
-    instance.sectionFont = love.graphics.newFont(18)
-
     instance:createMenuButtons()
     instance:createOptionsButtons()
 
     return instance
+end
+
+function Menu:setFonts(fonts)
+    self.smallFont = fonts.small
+    self.mediumFont = fonts.medium
+    self.largeFont = fonts.large
+    self.sectionFont = fonts.section
 end
 
 function Menu:setScreenSize(width, height)
