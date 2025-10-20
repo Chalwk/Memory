@@ -218,14 +218,7 @@ function Game:update(dt)
         anim.progress = anim.progress + dt / anim.duration
 
         if anim.progress >= 1 then
-            if anim.type == "flip_back" then
-                for _, cardId in ipairs(anim.cards) do
-                    local card = self:getCardById(cardId)
-                    if card and not card.isMatched then
-                        card:flipDown()
-                    end
-                end
-            elseif anim.callback then
+            if anim.callback then
                 anim.callback()
             end
             table_remove(self.animations, i)
@@ -469,10 +462,10 @@ function Game:handleMismatch()
         table_insert(cardsToFlip, card)
     end
 
-    -- Clear flipped cards immediately
+    -- Clear flipped cards immediately so new cards can be clicked
     self.flippedCards = {}
 
-    -- Flip back both cards simultaneously after a short delay
+    -- Flip back both cards after a short delay using animation
     table_insert(self.animations, {
         type = "flip_back",
         cards = cardsToFlip,
