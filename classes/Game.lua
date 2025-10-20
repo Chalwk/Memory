@@ -13,6 +13,8 @@ local string_format = string.format
 local Card = require("classes/Card")
 local DeckManager = require("classes/DeckManager")
 
+local sounds = {}
+
 local Game = {}
 Game.__index = Game
 
@@ -34,6 +36,7 @@ function Game.new()
     instance.difficulty = "medium"
     instance.deckType = "shapes" -- Only shapes now
     instance.animations = {}
+    instance.sounds = {}
     instance.combo = 0
     instance.comboTimer = 0
     instance.maxComboTime = 3
@@ -68,6 +71,15 @@ function Game.new()
     }
     instance.tokens = 0
     instance.globalParticles = {}
+
+    sounds.background = love.audio.newSource("assets/sounds/background.mp3", "stream")
+    sounds.card_flipup = love.audio.newSource("assets/sounds/card_flipup.mp3", "static")
+    sounds.card_flipdown = love.audio.newSource("assets/sounds/card_flipdown.mp3", "static")
+    sounds.card_match = love.audio.newSource("assets/sounds/card_match.mp3", "static")
+
+    sounds.background:setLooping(true)
+    sounds.background:setVolume(0.3)
+    love.audio.play(sounds.background)
 
     return instance
 end
@@ -394,7 +406,7 @@ function Game:flipCard(card)
     -- Prevent flipping if card is already being animated or is matched
     if card.flipDirection ~= 0 or card.isMatched then return end
 
-    card:flipUp()
+    card:flipUp(sounds)
     table_insert(self.flippedCards, card)
 
     if #self.flippedCards == 2 then
@@ -442,6 +454,8 @@ function Game:handleMatch()
         self:activateBonus("streak")
     end
 
+    love.audio.play(sounds.card_match)
+
     -- Immediately mark cards as matched and clear flipped cards
     for _, card in ipairs(self.flippedCards) do
         card.isMatched = true
@@ -474,7 +488,7 @@ function Game:handleMismatch()
         callback = function()
             for _, card in ipairs(cardsToFlip) do
                 if not card.isMatched then
-                    card:flipDown()
+                    card:flipDown(sounds)
                 end
             end
         end
@@ -566,7 +580,7 @@ function Game:activatePreview()
     -- Briefly show all cards
     for _, card in ipairs(self.cards) do
         if not card.isMatched then
-            card:flipUp()
+            card:flipUp(sounds)
         end
     end
 
@@ -577,7 +591,7 @@ function Game:activatePreview()
         callback = function()
             for _, card in ipairs(self.cards) do
                 if not card.isMatched and card.isFlipped then
-                    card:flipDown()
+                    card:flipDown(sounds)
                 end
             end
         end

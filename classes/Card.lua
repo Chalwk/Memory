@@ -204,82 +204,62 @@ function Card:drawShape()
     love.graphics.scale(scale, scale)
 
     -- Set shape color
-    love.graphics.setColor(shape.color or {1, 1, 1})
+    love.graphics.setColor(shape.color or { 1, 1, 1 })
 
     -- Draw different shape types
     if shape.type == "circle" then
         local radius = (shape.radius or 0.4) * math_min(self.width, self.height) * 0.4
         love.graphics.circle("fill", 0, 0, radius)
-
     elseif shape.type == "square" then
         local size = (shape.size or 0.7) * math_min(self.width, self.height) * 0.4
-        love.graphics.rectangle("fill", -size/2, -size/2, size, size)
-
+        love.graphics.rectangle("fill", -size / 2, -size / 2, size, size)
     elseif shape.type == "triangle" then
         local size = (shape.size or 0.6) * math_min(self.width, self.height) * 0.4
         love.graphics.polygon("fill",
-            0, -size/2,
-            -size/2, size/2,
-            size/2, size/2
+            0, -size / 2,
+            -size / 2, size / 2,
+            size / 2, size / 2
         )
-
     elseif shape.type == "star" then
         self:drawStar(shape.points or 5, shape.outerRadius or 0.5, shape.innerRadius or 0.2)
-
     elseif shape.type == "hexagon" then
         self:drawRegularPolygon(shape.sides or 6, shape.radius or 0.4)
-
     elseif shape.type == "diamond" then
         local size = (shape.size or 0.6) * math_min(self.width, self.height) * 0.4
         love.graphics.polygon("fill",
-            0, -size/2,
-            size/2, 0,
-            0, size/2,
-            -size/2, 0
+            0, -size / 2,
+            size / 2, 0,
+            0, size / 2,
+            -size / 2, 0
         )
-
     elseif shape.type == "heart" then
         self:drawHeart(shape.size or 0.5)
-
     elseif shape.type == "cross" then
         self:drawCross(shape.size or 0.6)
-
     elseif shape.type == "spiral" then
         self:drawSpiral(shape.segments or 8)
-
     elseif shape.type == "gear" then
         self:drawGear(shape.teeth or 8, shape.outerRadius or 0.5, shape.innerRadius or 0.3)
-
     elseif shape.type == "flower" then
         self:drawFlower(shape.petals or 6, shape.size or 0.5)
-
     elseif shape.type == "sun" then
         self:drawSun(shape.rays or 12, shape.size or 0.5)
-
     elseif shape.type == "snowflake" then
         self:drawSnowflake(shape.branches or 6, shape.size or 0.5)
-
     elseif shape.type == "atom" then
         self:drawAtom(shape.orbits or 3, shape.size or 0.5)
-
     elseif shape.type == "cogwheel" then
         self:drawCogwheel(shape.teeth or 10, shape.size or 0.5)
-
     elseif shape.type == "moon" then
         self:drawMoon(shape.phase or 0.7, shape.size or 0.5)
-
     elseif shape.type == "mandala" then
         self:drawMandala(shape.layers or 3, shape.size or 0.5)
-
     elseif shape.type == "crystal" then
         self:drawCrystal(shape.points or 7, shape.size or 0.5)
-
     elseif shape.type == "nebula" then
         self:drawNebula(shape.swirls or 4, shape.size or 0.5)
-
     elseif shape.type == "comet" then
         self:drawComet(shape.size or 0.5)
-
     elseif shape.type == "galaxy" then
         self:drawGalaxy(shape.arms or 2, shape.size or 0.5)
     end
@@ -337,8 +317,8 @@ function Card:drawCross(size)
     local armWidth = 0.2 * scale
     local armLength = 0.8 * scale
 
-    love.graphics.rectangle("fill", -armLength/2, -armWidth/2, armLength, armWidth)
-    love.graphics.rectangle("fill", -armWidth/2, -armLength/2, armWidth, armLength)
+    love.graphics.rectangle("fill", -armLength / 2, -armWidth / 2, armLength, armWidth)
+    love.graphics.rectangle("fill", -armWidth / 2, -armLength / 2, armWidth, armLength)
 end
 
 function Card:drawSpiral(segments)
@@ -479,7 +459,7 @@ function Card:drawMoon(phase, size)
     -- Phase shadow
     love.graphics.setColor(0.1, 0.1, 0.2)
     love.graphics.arc("fill", maxRadius * (phase - 0.5) * 2, 0, maxRadius,
-                     -math_pi/2, math_pi/2)
+        -math_pi / 2, math_pi / 2)
 end
 
 function Card:drawMandala(layers, size)
@@ -500,7 +480,7 @@ function Card:drawMandala(layers, size)
                 love.graphics.circle("fill", 0, 0, radius * 0.2)
             else
                 love.graphics.rectangle("fill", -radius * 0.1, -radius * 0.3,
-                                      radius * 0.2, radius * 0.6)
+                    radius * 0.2, radius * 0.6)
             end
 
             love.graphics.pop()
@@ -555,9 +535,9 @@ function Card:drawComet(size)
         local progress = i / 5
         local alpha = 1 - progress
         love.graphics.setColor(self.content.color[1], self.content.color[2],
-                             self.content.color[3], alpha)
+            self.content.color[3], alpha)
         love.graphics.circle("fill", -maxRadius * progress * 0.8, 0,
-                           maxRadius * 0.1 * (1 - progress))
+            maxRadius * 0.1 * (1 - progress))
     end
     love.graphics.pop()
 end
@@ -595,22 +575,24 @@ function Card:drawParticles()
     end
 end
 
-function Card:flipUp()
+function Card:flipUp(sounds)
     if not self.isFlipped and self.flipDirection == 0 then
         self.isFlipped = true
         self.flipDirection = 1
         self.flipProgress = 0
         self:createFlipParticles()
+        love.audio.play(sounds.card_flipup)
         return true
     end
     return false
 end
 
-function Card:flipDown()
+function Card:flipDown(sounds)
     if self.isFlipped and self.flipDirection == 0 then
         self.isFlipped = false
         self.flipDirection = -1
         self.flipProgress = 1
+        love.audio.play(sounds.card_flipdown)
         return true
     end
     return false
