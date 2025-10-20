@@ -652,6 +652,9 @@ end
 function Card:setMatched()
     self.isMatched = true
     self:createMatchParticles()
+    self.isFlipped = true
+    self.flipProgress = 1
+    self.flipDirection = 0
 end
 
 return Card

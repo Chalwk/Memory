@@ -398,6 +398,9 @@ function Game:handleClick(x, y)
 end
 
 function Game:flipCard(card)
+    -- Prevent flipping if card is already being animated or is matched
+    if card.flipDirection ~= 0 or card.isMatched then return end
+
     card:flipUp()
     table_insert(self.flippedCards, card)
 
@@ -446,9 +449,10 @@ function Game:handleMatch()
         self:activateBonus("streak")
     end
 
-    -- Mark cards as matched and clear flipped cards
+    -- Immediately mark cards as matched and clear flipped cards
     for _, card in ipairs(self.flippedCards) do
-        card:setMatched()
+        card.isMatched = true
+        card:createMatchParticles()
     end
     self.flippedCards = {}
 
@@ -459,21 +463,28 @@ function Game:handleMismatch()
     self.combo = 0
     self.streak = 0
 
-    -- Store the cards that need to be flipped back
+    -- Store references to the cards that need to be flipped back
     local cardsToFlip = {}
     for _, card in ipairs(self.flippedCards) do
-        table_insert(cardsToFlip, card.id)
+        table_insert(cardsToFlip, card)
     end
 
     -- Clear flipped cards immediately
     self.flippedCards = {}
 
-    -- Add animation to flip back
+    -- Flip back both cards simultaneously after a short delay
     table_insert(self.animations, {
         type = "flip_back",
         cards = cardsToFlip,
         progress = 0,
-        duration = 1
+        duration = 0.8,
+        callback = function()
+            for _, card in ipairs(cardsToFlip) do
+                if not card.isMatched then
+                    card:flipDown()
+                end
+            end
+        end
     })
 end
 
