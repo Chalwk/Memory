@@ -19,7 +19,7 @@ function Card.new(id, content, cardType, x, y, width, height)
 
     instance.id = id
     instance.content = content
-    instance.cardType = cardType -- "words", "ascii", "numbers"
+    instance.cardType = cardType -- "shapes"
     instance.x = x
     instance.y = y
     instance.width = width
@@ -33,6 +33,7 @@ function Card.new(id, content, cardType, x, y, width, height)
     instance.pulsePhase = math_random() * math_pi * 2
     instance.glowIntensity = 0
     instance.particles = {}
+    instance.animationTime = 0
 
     instance.colors = {
         background = { 0.1, 0.15, 0.25 },
@@ -71,6 +72,9 @@ function Card:update(dt)
     else
         self.glowIntensity = 0
     end
+
+    -- Update animation time for shape animations
+    self.animationTime = self.animationTime + dt
 
     -- Update particles
     for i = #self.particles, 1, -1 do
@@ -175,35 +179,412 @@ function Card:drawBack()
 end
 
 function Card:drawContent()
-    love.graphics.setColor(self.colors.text)
+    if self.cardType == "shapes" then
+        self:drawShape()
+    end
+end
 
-    if self.cardType == "words" or self.cardType == "numbers" then
-        -- Use card font for words and numbers
-        love.graphics.setFont(self.fonts.cardLarge)
-        local text = tostring(self.content)
-        local textWidth = self.fonts.cardLarge:getWidth(text)
-        local textHeight = self.fonts.cardLarge:getHeight()
+function Card:drawShape()
+    local shape = self.content
+    if not shape then return end
 
-        -- Center the text
-        love.graphics.print(text, -textWidth / 2, -textHeight / 2)
+    -- Apply shape animations
+    local anim = shape.animation or {}
+    local scale = 1
+    local rotation = 0
 
-    elseif self.cardType == "ascii" then
-        -- Use monospace font for ASCII art and scale appropriately
-        love.graphics.setFont(self.fonts.ascii)
-        local scale = math_min(self.width, self.height) * 0.008 -- Adjusted scale
-        local lines = {}
-        for line in self.content:gmatch("[^\r\n]+") do
-            table_insert(lines, line)
-        end
+    if anim.type == "pulse" then
+        scale = 0.9 + 0.2 * math_sin(self.animationTime * (anim.speed or 1) * math_pi * 2)
+    elseif anim.type == "rotate" then
+        rotation = self.animationTime * (anim.speed or 1) * math_pi * 2
+    end
 
-        local totalHeight = #lines * self.fonts.ascii:getHeight() * scale
-        local startY = -totalHeight / 2
+    love.graphics.push()
+    love.graphics.rotate(rotation)
+    love.graphics.scale(scale, scale)
 
-        for i, line in ipairs(lines) do
-            local lineWidth = self.fonts.ascii:getWidth(line) * scale
-            love.graphics.print(line, -lineWidth / 2, startY + (i-1) * self.fonts.ascii:getHeight() * scale, 0, scale)
+    -- Set shape color
+    love.graphics.setColor(shape.color or {1, 1, 1})
+
+    -- Draw different shape types
+    if shape.type == "circle" then
+        local radius = (shape.radius or 0.4) * math_min(self.width, self.height) * 0.4
+        love.graphics.circle("fill", 0, 0, radius)
+
+    elseif shape.type == "square" then
+        local size = (shape.size or 0.7) * math_min(self.width, self.height) * 0.4
+        love.graphics.rectangle("fill", -size/2, -size/2, size, size)
+
+    elseif shape.type == "triangle" then
+        local size = (shape.size or 0.6) * math_min(self.width, self.height) * 0.4
+        love.graphics.polygon("fill",
+            0, -size/2,
+            -size/2, size/2,
+            size/2, size/2
+        )
+
+    elseif shape.type == "star" then
+        self:drawStar(shape.points or 5, shape.outerRadius or 0.5, shape.innerRadius or 0.2)
+
+    elseif shape.type == "hexagon" then
+        self:drawRegularPolygon(shape.sides or 6, shape.radius or 0.4)
+
+    elseif shape.type == "diamond" then
+        local size = (shape.size or 0.6) * math_min(self.width, self.height) * 0.4
+        love.graphics.polygon("fill",
+            0, -size/2,
+            size/2, 0,
+            0, size/2,
+            -size/2, 0
+        )
+
+    elseif shape.type == "heart" then
+        self:drawHeart(shape.size or 0.5)
+
+    elseif shape.type == "cross" then
+        self:drawCross(shape.size or 0.6)
+
+    elseif shape.type == "spiral" then
+        self:drawSpiral(shape.segments or 8)
+
+    elseif shape.type == "gear" then
+        self:drawGear(shape.teeth or 8, shape.outerRadius or 0.5, shape.innerRadius or 0.3)
+
+    elseif shape.type == "flower" then
+        self:drawFlower(shape.petals or 6, shape.size or 0.5)
+
+    elseif shape.type == "sun" then
+        self:drawSun(shape.rays or 12, shape.size or 0.5)
+
+    elseif shape.type == "snowflake" then
+        self:drawSnowflake(shape.branches or 6, shape.size or 0.5)
+
+    elseif shape.type == "atom" then
+        self:drawAtom(shape.orbits or 3, shape.size or 0.5)
+
+    elseif shape.type == "cogwheel" then
+        self:drawCogwheel(shape.teeth or 10, shape.size or 0.5)
+
+    elseif shape.type == "moon" then
+        self:drawMoon(shape.phase or 0.7, shape.size or 0.5)
+
+    elseif shape.type == "mandala" then
+        self:drawMandala(shape.layers or 3, shape.size or 0.5)
+
+    elseif shape.type == "crystal" then
+        self:drawCrystal(shape.points or 7, shape.size or 0.5)
+
+    elseif shape.type == "nebula" then
+        self:drawNebula(shape.swirls or 4, shape.size or 0.5)
+
+    elseif shape.type == "comet" then
+        self:drawComet(shape.size or 0.5)
+
+    elseif shape.type == "galaxy" then
+        self:drawGalaxy(shape.arms or 2, shape.size or 0.5)
+    end
+
+    love.graphics.pop()
+end
+
+-- Shape drawing methods
+function Card:drawStar(points, outerRadius, innerRadius)
+    local vertices = {}
+    local maxRadius = math_min(self.width, self.height) * 0.4
+
+    for i = 1, points * 2 do
+        local angle = (i - 1) * math_pi / points
+        local radius = (i % 2 == 1) and (outerRadius * maxRadius) or (innerRadius * maxRadius)
+        table_insert(vertices, math_cos(angle) * radius)
+        table_insert(vertices, math_sin(angle) * radius)
+    end
+
+    love.graphics.polygon("fill", vertices)
+end
+
+function Card:drawRegularPolygon(sides, radius)
+    local vertices = {}
+    local maxRadius = math_min(self.width, self.height) * 0.4 * radius
+
+    for i = 1, sides do
+        local angle = (i - 1) * 2 * math_pi / sides
+        table_insert(vertices, math_cos(angle) * maxRadius)
+        table_insert(vertices, math_sin(angle) * maxRadius)
+    end
+
+    love.graphics.polygon("fill", vertices)
+end
+
+function Card:drawHeart(size)
+    local scale = math_min(self.width, self.height) * 0.4 * size
+    love.graphics.push()
+    love.graphics.scale(scale, scale)
+
+    -- Draw heart using circles and triangle
+    love.graphics.circle("fill", -0.3, 0, 0.3)
+    love.graphics.circle("fill", 0.3, 0, 0.3)
+    love.graphics.polygon("fill",
+        -0.6, 0,
+        0, 0.8,
+        0.6, 0
+    )
+
+    love.graphics.pop()
+end
+
+function Card:drawCross(size)
+    local scale = math_min(self.width, self.height) * 0.4 * size
+    local armWidth = 0.2 * scale
+    local armLength = 0.8 * scale
+
+    love.graphics.rectangle("fill", -armLength/2, -armWidth/2, armLength, armWidth)
+    love.graphics.rectangle("fill", -armWidth/2, -armLength/2, armWidth, armLength)
+end
+
+function Card:drawSpiral(segments)
+    local maxRadius = math_min(self.width, self.height) * 0.4
+    love.graphics.setLineWidth(3)
+
+    for i = 1, segments do
+        local progress = i / segments
+        local angle = progress * math_pi * 4
+        local radius = progress * maxRadius
+
+        love.graphics.points(
+            math_cos(angle) * radius,
+            math_sin(angle) * radius
+        )
+    end
+    love.graphics.setLineWidth(1)
+end
+
+function Card:drawGear(teeth, outerRadius, innerRadius)
+    local maxRadius = math_min(self.width, self.height) * 0.4
+    local vertices = {}
+
+    for i = 1, teeth * 2 do
+        local angle = (i - 1) * math_pi / teeth
+        local radius = (i % 2 == 1) and (outerRadius * maxRadius) or (innerRadius * maxRadius)
+        table_insert(vertices, math_cos(angle) * radius)
+        table_insert(vertices, math_sin(angle) * radius)
+    end
+
+    love.graphics.polygon("fill", vertices)
+end
+
+function Card:drawFlower(petals, size)
+    local maxRadius = math_min(self.width, self.height) * 0.4 * size
+
+    for i = 1, petals do
+        local angle = (i - 1) * 2 * math_pi / petals
+        love.graphics.push()
+        love.graphics.rotate(angle)
+        love.graphics.translate(maxRadius * 0.6, 0)
+        love.graphics.scale(0.8, 0.8)
+        love.graphics.rotate(-angle)
+        love.graphics.ellipse("fill", 0, 0, maxRadius * 0.4, maxRadius * 0.2)
+        love.graphics.pop()
+    end
+
+    -- Center circle
+    love.graphics.circle("fill", 0, 0, maxRadius * 0.2)
+end
+
+function Card:drawSun(rays, size)
+    local maxRadius = math_min(self.width, self.height) * 0.4 * size
+
+    -- Center circle
+    love.graphics.circle("fill", 0, 0, maxRadius * 0.3)
+
+    -- Rays
+    for i = 1, rays do
+        local angle = (i - 1) * 2 * math_pi / rays
+        love.graphics.push()
+        love.graphics.rotate(angle)
+        love.graphics.rectangle("fill", maxRadius * 0.2, -maxRadius * 0.05, maxRadius * 0.4, maxRadius * 0.1)
+        love.graphics.pop()
+    end
+end
+
+function Card:drawSnowflake(branches, size)
+    local maxRadius = math_min(self.width, self.height) * 0.4 * size
+    love.graphics.setLineWidth(2)
+
+    for i = 1, branches do
+        local angle = (i - 1) * 2 * math_pi / branches
+        love.graphics.push()
+        love.graphics.rotate(angle)
+
+        -- Main branch
+        love.graphics.line(0, 0, 0, maxRadius)
+
+        -- Side branches
+        love.graphics.line(maxRadius * 0.3, maxRadius * 0.3, maxRadius * 0.5, maxRadius * 0.5)
+        love.graphics.line(-maxRadius * 0.3, maxRadius * 0.3, -maxRadius * 0.5, maxRadius * 0.5)
+
+        love.graphics.pop()
+    end
+    love.graphics.setLineWidth(1)
+end
+
+function Card:drawAtom(orbits, size)
+    local maxRadius = math_min(self.width, self.height) * 0.4 * size
+    love.graphics.setLineWidth(2)
+
+    -- Nucleus
+    love.graphics.circle("fill", 0, 0, maxRadius * 0.1)
+
+    -- Electron orbits
+    for i = 1, orbits do
+        local radius = maxRadius * (0.2 + 0.2 * i)
+        love.graphics.circle("line", 0, 0, radius)
+
+        -- Electrons
+        local electronAngle = self.animationTime * (i + 1)
+        love.graphics.circle("fill",
+            math_cos(electronAngle) * radius,
+            math_sin(electronAngle) * radius,
+            maxRadius * 0.05
+        )
+    end
+    love.graphics.setLineWidth(1)
+end
+
+function Card:drawCogwheel(teeth, size)
+    local maxRadius = math_min(self.width, self.height) * 0.4 * size
+    local vertices = {}
+
+    for i = 1, teeth do
+        local angle1 = (i - 1) * 2 * math_pi / teeth
+        local angle2 = angle1 + math_pi / teeth
+
+        -- Outer points
+        table_insert(vertices, math_cos(angle1) * maxRadius)
+        table_insert(vertices, math_sin(angle1) * maxRadius)
+
+        -- Inner points
+        table_insert(vertices, math_cos(angle2) * maxRadius * 0.7)
+        table_insert(vertices, math_sin(angle2) * maxRadius * 0.7)
+    end
+
+    love.graphics.polygon("fill", vertices)
+end
+
+function Card:drawMoon(phase, size)
+    local maxRadius = math_min(self.width, self.height) * 0.4 * size
+
+    -- Full circle (moon)
+    love.graphics.circle("fill", 0, 0, maxRadius)
+
+    -- Phase shadow
+    love.graphics.setColor(0.1, 0.1, 0.2)
+    love.graphics.arc("fill", maxRadius * (phase - 0.5) * 2, 0, maxRadius,
+                     -math_pi/2, math_pi/2)
+end
+
+function Card:drawMandala(layers, size)
+    local maxRadius = math_min(self.width, self.height) * 0.4 * size
+
+    for layer = 1, layers do
+        local radius = maxRadius * (layer / layers)
+        local elements = 6 + layer * 2
+
+        for i = 1, elements do
+            local angle = (i - 1) * 2 * math_pi / elements
+            love.graphics.push()
+            love.graphics.rotate(angle)
+            love.graphics.translate(radius, 0)
+            love.graphics.rotate(-angle + self.animationTime)
+
+            if layer % 2 == 0 then
+                love.graphics.circle("fill", 0, 0, radius * 0.2)
+            else
+                love.graphics.rectangle("fill", -radius * 0.1, -radius * 0.3,
+                                      radius * 0.2, radius * 0.6)
+            end
+
+            love.graphics.pop()
         end
     end
+end
+
+function Card:drawCrystal(points, size)
+    local maxRadius = math_min(self.width, self.height) * 0.4 * size
+    local vertices = {}
+
+    for i = 1, points do
+        local angle = (i - 1) * 2 * math_pi / points
+        local radius = maxRadius * (0.7 + 0.3 * math_sin(angle * 2))
+        table_insert(vertices, math_cos(angle) * radius)
+        table_insert(vertices, math_sin(angle) * radius)
+    end
+
+    love.graphics.polygon("fill", vertices)
+end
+
+function Card:drawNebula(swirls, size)
+    local maxRadius = math_min(self.width, self.height) * 0.4 * size
+    love.graphics.setLineWidth(2)
+
+    for i = 1, swirls do
+        local startAngle = (i - 1) * 2 * math_pi / swirls
+        for j = 1, 5 do
+            local progress = j / 5
+            local angle = startAngle + progress * math_pi * 2 + self.animationTime
+            local radius = maxRadius * progress
+
+            love.graphics.points(
+                math_cos(angle) * radius,
+                math_sin(angle) * radius
+            )
+        end
+    end
+    love.graphics.setLineWidth(1)
+end
+
+function Card:drawComet(size)
+    local maxRadius = math_min(self.width, self.height) * 0.4 * size
+
+    -- Comet head
+    love.graphics.circle("fill", 0, 0, maxRadius * 0.2)
+
+    -- Comet tail
+    love.graphics.push()
+    love.graphics.rotate(self.animationTime)
+    for i = 1, 5 do
+        local progress = i / 5
+        local alpha = 1 - progress
+        love.graphics.setColor(self.content.color[1], self.content.color[2],
+                             self.content.color[3], alpha)
+        love.graphics.circle("fill", -maxRadius * progress * 0.8, 0,
+                           maxRadius * 0.1 * (1 - progress))
+    end
+    love.graphics.pop()
+end
+
+function Card:drawGalaxy(arms, size)
+    local maxRadius = math_min(self.width, self.height) * 0.4 * size
+
+    -- Galactic center
+    love.graphics.circle("fill", 0, 0, maxRadius * 0.3)
+
+    -- Spiral arms
+    love.graphics.setLineWidth(2)
+    for arm = 1, arms do
+        local startAngle = (arm - 1) * 2 * math_pi / arms
+
+        for i = 1, 20 do
+            local progress = i / 20
+            local angle = startAngle + progress * math_pi * 2 + self.animationTime
+            local radius = maxRadius * (0.3 + progress * 0.7)
+
+            love.graphics.points(
+                math_cos(angle) * radius,
+                math_sin(angle) * radius
+            )
+        end
+    end
+    love.graphics.setLineWidth(1)
 end
 
 function Card:drawParticles()
@@ -230,7 +611,7 @@ function Card:flipDown()
 end
 
 function Card:createFlipParticles()
-    for i = 1, 15 do
+    for _ = 1, 15 do
         table_insert(self.particles, {
             x = (math_random() - 0.5) * self.width * 0.8,
             y = (math_random() - 0.5) * self.height * 0.8,

@@ -12,7 +12,7 @@ local helpText = {
     "• Combo system - chain matches for bonus points",
     "• Streak bonuses - get rewards for consecutive matches",
     "• Power-ups - use tokens to activate special abilities",
-    "• Multiple difficulties and deck types",
+    "• Multiple difficulties with colorful shapes",
     "",
     "Power-ups:",
     "• Memory Preview - Briefly reveal all cards",
@@ -31,7 +31,7 @@ function Menu.new()
     instance.screenWidth = 1200
     instance.screenHeight = 800
     instance.difficulty = "medium"
-    instance.deckType = "words"
+    instance.deckType = "shapes" -- Only shapes now
     instance.title = {
         text = "MEMORY",
         scale = 1,
@@ -134,35 +134,6 @@ function Menu:createOptionsButtons()
             section = "difficulty"
         },
 
-        -- Deck Type Section
-        {
-            text = "Words",
-            action = "deck words",
-            width = 150,
-            height = 40,
-            x = 0,
-            y = 0,
-            section = "deck"
-        },
-        {
-            text = "ASCII Art",
-            action = "deck ascii",
-            width = 150,
-            height = 40,
-            x = 0,
-            y = 0,
-            section = "deck"
-        },
-        {
-            text = "Numbers",
-            action = "deck numbers",
-            width = 150,
-            height = 40,
-            x = 0,
-            y = 0,
-            section = "deck"
-        },
-
         -- Navigation
         {
             text = "Back to Menu",
@@ -187,7 +158,7 @@ end
 
 function Menu:updateOptionsButtonPositions()
     local centerX = self.screenWidth / 2
-    local totalSectionsHeight = 300
+    local totalSectionsHeight = 200
     local startY = (self.screenHeight - totalSectionsHeight) / 2
 
     -- Difficulty buttons
@@ -196,25 +167,15 @@ function Menu:updateOptionsButtonPositions()
     local diffStartX = centerX - diffTotalW / 2
     local diffY = startY + 40
 
-    -- Deck buttons
-    local deckButtonW, deckButtonH, deckSpacing = 150, 40, 15
-    local deckTotalW = 3 * deckButtonW + 2 * deckSpacing
-    local deckStartX = centerX - deckTotalW / 2
-    local deckY = startY + 120
-
     -- Navigation
-    local navY = startY + 220
+    local navY = startY + 120
 
-    local diffIndex, deckIndex = 0, 0
+    local diffIndex = 0
     for _, button in ipairs(self.optionsButtons) do
         if button.section == "difficulty" then
             button.x = diffStartX + diffIndex * (diffButtonW + diffSpacing)
             button.y = diffY
             diffIndex = diffIndex + 1
-        elseif button.section == "deck" then
-            button.x = deckStartX + deckIndex * (deckButtonW + deckSpacing)
-            button.y = deckY
-            deckIndex = deckIndex + 1
         elseif button.section == "navigation" then
             button.x = centerX - button.width / 2
             button.y = navY
@@ -264,7 +225,7 @@ function Menu:draw(screenWidth, screenHeight, state)
             -- Draw tagline
             love.graphics.setColor(0.8, 0.9, 1.0)
             love.graphics.setFont(self.smallFont)
-            love.graphics.printf("Train Your Brain - Match Memories",
+            love.graphics.printf("Train Your Brain - Match Shapes",
                 0, screenHeight / 3 + 50, screenWidth, "center")
         end
     elseif state == "options" then
@@ -316,18 +277,16 @@ function Menu:drawHelpOverlay(screenWidth, screenHeight)
 end
 
 function Menu:drawOptionsInterface()
-    local totalSectionsHeight = 300
+    local totalSectionsHeight = 200
     local startY = (self.screenHeight - totalSectionsHeight) / 2
 
     -- Draw section headers
     love.graphics.setFont(self.sectionFont)
     love.graphics.setColor(0.8, 0.8, 1)
     love.graphics.printf("Difficulty", 0, startY + 15, self.screenWidth, "center")
-    love.graphics.printf("Deck Type", 0, startY + 95, self.screenWidth, "center")
 
     self:updateOptionsButtonPositions()
     self:drawOptionSection("difficulty")
-    self:drawOptionSection("deck")
     self:drawOptionSection("navigation")
 end
 
@@ -340,12 +299,6 @@ function Menu:drawOptionSection(section)
             if button.action:sub(1, 4) == "diff" then
                 local difficulty = button.action:sub(6)
                 if difficulty == self.difficulty then
-                    love.graphics.setColor(0.2, 0.8, 0.2, 0.4)
-                    love.graphics.rectangle("fill", button.x - 3, button.y - 3, button.width + 6, button.height + 6, 5)
-                end
-            elseif button.action:sub(1, 4) == "deck" then
-                local deckType = button.action:sub(6)
-                if deckType == self.deckType then
                     love.graphics.setColor(0.2, 0.8, 0.2, 0.4)
                     love.graphics.rectangle("fill", button.x - 3, button.y - 3, button.width + 6, button.height + 6, 5)
                 end

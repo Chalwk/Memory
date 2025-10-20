@@ -30,7 +30,7 @@ function Game.new()
     instance.gameOver = false
     instance.won = false
     instance.difficulty = "medium"
-    instance.deckType = "words"
+    instance.deckType = "shapes" -- Only shapes now
     instance.animations = {}
     instance.combo = 0
     instance.comboTimer = 0
