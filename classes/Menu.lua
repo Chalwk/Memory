@@ -322,9 +322,9 @@ function Menu:drawButton(button)
     love.graphics.rectangle("line", button.x, button.y, button.width, button.height, 8, 8)
 
     love.graphics.setColor(1, 1, 1)
-    love.graphics.setFont(self.mediumFont)
-    local textWidth = self.mediumFont:getWidth(button.text)
-    local textHeight = self.mediumFont:getHeight()
+    love.graphics.setFont(self.smallFont)
+    local textWidth = self.smallFont:getWidth(button.text)
+    local textHeight = self.smallFont:getHeight()
     love.graphics.print(button.text, button.x + (button.width - textWidth) / 2,
         button.y + (button.height - textHeight) / 2)
 
