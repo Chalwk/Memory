@@ -599,15 +599,21 @@ function Card:flipUp()
     if not self.isFlipped and self.flipDirection == 0 then
         self.isFlipped = true
         self.flipDirection = 1
+        self.flipProgress = 0
         self:createFlipParticles()
+        return true
     end
+    return false
 end
 
 function Card:flipDown()
     if self.isFlipped and self.flipDirection == 0 then
         self.isFlipped = false
         self.flipDirection = -1
+        self.flipProgress = 1
+        return true
     end
+    return false
 end
 
 function Card:createFlipParticles()

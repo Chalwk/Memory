@@ -5,8 +5,10 @@
 local ipairs = ipairs
 local math_floor = math.floor
 local math_random = math.random
+local math_min = math.min
 local table_insert = table.insert
 local table_remove = table.remove
+local string_format = string.format
 
 local Card = require("classes/Card")
 local DeckManager = require("classes/DeckManager")
@@ -110,7 +112,7 @@ function Game:startNewGame(difficulty, deckType)
     local cardData = self.deckManager:getCardPairs(pairsCount, self.deckType)
 
     -- Create card objects
-    for i, data in ipairs(cardData) do
+    for _, data in ipairs(cardData) do
         local card = Card.new(data.id, data.content, data.cardType, 0, 0, 80, 120)
         if self.fonts then
             card:setFonts(self.fonts)
@@ -219,9 +221,12 @@ function Game:update(dt)
             if anim.type == "flip_back" then
                 for _, cardId in ipairs(anim.cards) do
                     local card = self:getCardById(cardId)
-                    if card then card:flipDown() end
+                    if card and not card.isMatched then
+                        card:flipDown()
+                    end
                 end
-                self.flippedCards = {}
+            elseif anim.callback then
+                anim.callback()
             end
             table_remove(self.animations, i)
         end
@@ -265,7 +270,7 @@ function Game:drawUI()
     -- Time
     local minutes = math_floor(self.timeElapsed / 60)
     local seconds = math_floor(self.timeElapsed % 60)
-    love.graphics.printf(string.format("Time: %02d:%02d", minutes, seconds),
+    love.graphics.printf(string_format("Time: %02d:%02d", minutes, seconds),
         0, uiY, self.screenWidth - 20, "right")
 
     -- Combo
@@ -343,7 +348,7 @@ end
 
 function Game:drawGlobalParticles()
     for _, particle in ipairs(self.globalParticles) do
-        local alpha = math.min(1, particle.life * 2)
+        local alpha = math_min(1, particle.life * 2)
         love.graphics.setColor(particle.color[1], particle.color[2], particle.color[3], alpha)
         love.graphics.circle("fill", particle.x, particle.y, particle.size)
     end
@@ -403,6 +408,8 @@ function Game:flipCard(card)
 end
 
 function Game:checkMatch()
+    if #self.flippedCards ~= 2 then return end
+
     local card1, card2 = self.flippedCards[1], self.flippedCards[2]
 
     if card1.id == card2.id then
@@ -415,10 +422,6 @@ function Game:checkMatch()
 end
 
 function Game:handleMatch()
-    for _, card in ipairs(self.flippedCards) do
-        card:setMatched()
-    end
-
     self.matchedPairs = self.matchedPairs + 1
 
     -- Calculate score
@@ -443,6 +446,10 @@ function Game:handleMatch()
         self:activateBonus("streak")
     end
 
+    -- Mark cards as matched and clear flipped cards
+    for _, card in ipairs(self.flippedCards) do
+        card:setMatched()
+    end
     self.flippedCards = {}
 
     self:createScoreParticles(matchScore)
@@ -452,9 +459,19 @@ function Game:handleMismatch()
     self.combo = 0
     self.streak = 0
 
+    -- Store the cards that need to be flipped back
+    local cardsToFlip = {}
+    for _, card in ipairs(self.flippedCards) do
+        table_insert(cardsToFlip, card.id)
+    end
+
+    -- Clear flipped cards immediately
+    self.flippedCards = {}
+
+    -- Add animation to flip back
     table_insert(self.animations, {
         type = "flip_back",
-        cards = { self.flippedCards[1].id, self.flippedCards[2].id },
+        cards = cardsToFlip,
         progress = 0,
         duration = 1
     })
@@ -473,7 +490,7 @@ function Game:activateBonus(bonusType)
 end
 
 function Game:createScoreParticles(score)
-    for i = 1, 10 do
+    for _ = 1, 10 do
         table_insert(self.globalParticles, {
             x = self.screenWidth / 2,
             y = self.screenHeight / 2,
@@ -487,7 +504,7 @@ function Game:createScoreParticles(score)
 end
 
 function Game:createBonusParticles()
-    for i = 1, 20 do
+    for _ = 1, 20 do
         table_insert(self.globalParticles, {
             x = self.screenWidth / 2,
             y = self.screenHeight / 2,
@@ -567,21 +584,19 @@ function Game:activateTimeFreeze()
     self.bonusActive = true
     self.bonusType = "time_freeze"
     self.bonusTimer = 5
-    -- In a full implementation, this would actually freeze the timer
+    -- todo: In a full implementation, this would actually freeze the timer
 end
 
 function Game:activateMatchAssist()
     self.bonusActive = true
     self.bonusType = "match_assist"
     self.bonusTimer = 10
-    -- This would highlight matching pairs in the actual implementation
+    -- todo: This would highlight matching pairs in the actual implementation
 end
 
 function Game:getCardById(id)
     for _, card in ipairs(self.cards) do
-        if card.id == id then
-            return card
-        end
+        if card.id == id then return card end
     end
     return nil
 end
